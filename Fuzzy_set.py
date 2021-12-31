@@ -272,7 +272,7 @@ class Fuzzy_set:
         print(f'Y1 = {self.kn[1]} * X1 + {self.bn[1]}')
 
     def coefs(self) -> tuple:
-        return ((self.kn[0], self.kn[1]),(self.bn[0], self.bn[1]))
+        return ((self.kn[0], self.kn[1]), (self.bn[0], self.bn[1]))
 
     def draw_set(self) -> None:
         _, ax = plt.subplots()
