@@ -4,7 +4,7 @@ except ModuleNotFoundError:
     print("Модуль matplotlib недоступен")
     print("Метод draw_set недоступен")
     print("Класс Fuzzy_filed недоступен")
-
+    
 class Fuzzy_set:  
     def __init__(self, m: float, M: float, a: float, b: float, inverted: bool = False):
         assert m != M or not (a == b == 0), 'Конфигурация (m, m, 0, 0) - недопустима'
@@ -44,23 +44,30 @@ class Fuzzy_set:
         self.kn = tuple(self.kn)
         self.bn = tuple(self.bn)
     
+    def _add(self, other):
+        a = self.a + other.a
+        b = self.b + other.b
+        m = self.m + other.m
+        M = self.M + other.M
+        return (m, M, a, b)
+    
     def __add__(self, other):
         assert isinstance(other, Fuzzy_set), 'Сложение выполняется только с нечёткими множетсвами'
         assert self.inverted == other.inverted, 'Невозможно выполнить операцию'
-        return Fuzzy_set(self.m + other.m,
-                         self.M + other.M,
-                         self.a + other.a,
-                         self.b + other.b)
+        return Fuzzy_set(*self._add(other))
 
     def __iadd__(self, other):
         assert isinstance(other, Fuzzy_set), 'Сложение выполняется только с нечёткими множетсвами'
         assert self.inverted == other.inverted, 'Невозможно выполнить операцию'
-        self.m += other.m,
-        self.M += other.M,
-        self.a += other.a,
-        self.b += other.b
+        self.m, self.M, self.a, self.b = self.add(other)
+        self.bounds = (self.m - self.a,
+                       self.M + self.b)
         self.calculateCurves()
         return self
+
+    def _sub(self, other):
+        #TODO
+        pass
 		
     def __sub__(self, other):
         assert isinstance(other, Fuzzy_set), 'Вычитание выполняется только с нечёткими множетсвами'
@@ -77,8 +84,14 @@ class Fuzzy_set:
         self.M -= other.m,
         self.a += other.b,
         self.b += other.a
+        self.bounds = (self.m - self.a,
+                       self.M + self.b)
         self.calculateCurves()
         return self
+
+    def _mul(self, other):
+        #TODO
+        pass
 		
     def __mul__(self, other):
         assert isinstance(other, Fuzzy_set), 'Умножение выполняется только с нечёткими множетсвами'
@@ -93,14 +106,18 @@ class Fuzzy_set:
     def __imul__(self, other):
         assert isinstance(other, Fuzzy_set), 'Умножение выполняется только с нечёткими множетсвами'
         assert self.inverted == other.inverted, 'Невозможно выполнить операцию'
-        temp_m = self.m
-        temp_M = self.M
+        self.a = self.m * other.m - (self.m - self.a)*(other.m - other.a)
+        self.b = (self.m + self.b)*(other.M + other.b) - self.m * other.M
         self.m *= other.m
         self.M *= other.M
-        self.a = temp_m * other.m - (temp_m - self.a)*(other.m - other.a)
-        self.b = (temp_M + self.b)*(other.M + other.b) - temp_M * other.M
+        self.bounds = (self.m - self.a,
+                       self.M + self.b)
         self.calculateCurves()
         return self
+
+    def _truediv(self, other):
+        #TODO
+        pass
 
     def __truediv__(self, other):
         assert isinstance(other, Fuzzy_set), 'Деление выполняется только с нечёткими множетсвами'
@@ -123,33 +140,43 @@ class Fuzzy_set:
             / (other.M**2 + other.M * other.b)
         self.b = (other.m * self.b + temp_M * other.a) \
             / (other.m**2 + other.m * other.a)
+        self.bounds = (self.m - self.a,
+                       self.M + self.b)
         self.calculateCurves()
         return self
+    
+    def _pow(self, exp):
+        #TODO
+        pass
 
     def __pow__(self, exp):
-        assert isinstance(other, int), 'A**X X - целое число'
-        assert self.inverted == other.inverted, 'Невозможно выполнить операцию'
+        assert isinstance(exp, int), 'A**X, X - целое число'
         temp_m = self.m
         temp_M = self.M
         temp_a = self.a
         temp_b = self.b
         for _ in range(exp-1):
-            temp_m *= other
-            temp_M *= other
-            temp_a = self.m **2 - self.bounds[0] **2
-            temp_b = self.bounds[1] **2 - self.M **2
+            temp_a = temp_m**2 - (temp_m - temp_a)**2
+            temp_b = (temp_M + temp_b)**2 - temp_M**2
+            temp_m *= exp
+            temp_M *= exp
         return Fuzzy_set(temp_m, temp_M, temp_a, temp_b)
 
-    def __ipow__(self, other):
-        assert isinstance(other, int), 'A**X X - целое число'
-        assert self.inverted == other.inverted, 'Невозможно выполнить операцию'
-        for _ in range(other-1):
-            temp_m = self.m
-            temp_M = self.M
-            self.m *= other
-            self.M *= other
-            self.a = temp_m **2 - (temp_m - self.a)**2
-            self.b = (temp_M + self.b)**2 - temp_M **2
+    def __ipow__(self, exp):
+        assert isinstance(exp, int), 'A**X, X - целое число'
+        temp_m = self.m
+        temp_M = self.M
+        temp_a = self.a
+        temp_b = self.b
+        for _ in range(exp-1):
+            temp_a = temp_m**2 - (temp_m - temp_a)**2
+            temp_b = (temp_M + temp_b)**2 - temp_M**2
+            temp_m *= exp
+            temp_M *= exp
+        
+        self.a, self.m, self.M, self.b = temp_a, temp_m, temp_M, temp_b
+        self.bounds = (self.m - self.a,
+                       self.M + self.b)
         self.calculateCurves()
         return self
 
@@ -260,7 +287,7 @@ class Fuzzy_set:
     def suprInf(self, other, supr: bool = True) -> float:
         bounds = (min(self.bounds[0], other.bounds[0]) - 1,
                   max(self.bounds[1], other.bounds[1]) + 1)
-        X = [i for i in range(bounds[0], bounds[1]+1)]
+        X = [i/10 for i in range(bounds[0]*10, bounds[1]*10+1)]
         A = [self.probability(i) for i in X]
         B = [other.probability(i) for i in X]
         if supr:
@@ -288,7 +315,7 @@ class Fuzzy_set:
         return ((self.kn[0], self.kn[1]),(self.bn[0], self.bn[1]))
 
     def draw_set(self) -> None:
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
         X = (self.bounds[0], self.m, self.M, self.bounds[1])
         Y = (0, 1, 1, 0)
         if self.inverted:
@@ -312,11 +339,10 @@ class Fuzzy_field:
         for fuzzy_set in fuzzy_sets:
             self.field.append(fuzzy_set)
         
-
     def __add__(self, other):
         return Fuzzy_field(*list(set(tuple(self.field+other.field))))
 
-    def __iadd_(self, other):
+    def __iadd__(self, other):
         self.field += other.field
         self.field = list(set(tuple(self.field)))
         return self
@@ -368,3 +394,12 @@ class Fuzzy_field:
                 title='Fuzzy set\'s field mapping')
         ax.grid()
         plt.show()
+if __name__ == '__main__':
+    A = Fuzzy_set(50,100,5,5)
+    B = Fuzzy_set(10,20,1,1)
+    A + B
+    A - B
+    A * B
+    A / B
+    A**3
+    A += B
