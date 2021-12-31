@@ -40,7 +40,7 @@ class Fuzzy_set:
         self.kn = tuple(self.kn)
         self.bn = tuple(self.bn)
     
-    def update_bounds(self):
+    def updateBounds(self):
         self.bounds = (self.m - self.a, self.M + self.b)
     
     def _add(self, other):
@@ -59,7 +59,7 @@ class Fuzzy_set:
         assert isinstance(other, Fuzzy_set), 'Сложение выполняется только с нечёткими множествами'
         assert self.inverted == other.inverted, 'Невозможно выполнить операцию'
         self.m, self.M, self.a, self.b = self.add(other)
-        self.update_bounds()
+        self.updateBounds()
         self.calculateCurves()
         return self
 
@@ -79,7 +79,7 @@ class Fuzzy_set:
         assert isinstance(other, Fuzzy_set), 'Вычитание выполняется только с нечёткими множествами'
         assert self.inverted == other.inverted, 'Невозможно выполнить операцию'
         self.m, self.M, self.a, self.b = self._sub(other)
-        self.update_bounds()
+        self.updateBounds()
         self.calculateCurves()
         return self
 
@@ -99,7 +99,7 @@ class Fuzzy_set:
         assert isinstance(other, Fuzzy_set), 'Умножение выполняется только с нечёткими множествами'
         assert self.inverted == other.inverted, 'Невозможно выполнить операцию'
         self.m, self.M, self.a, self.b = self._mul(other)
-        self.update_bounds()
+        self.updateBounds()
         self.calculateCurves()
         return self
 
@@ -119,7 +119,7 @@ class Fuzzy_set:
         assert isinstance(other, Fuzzy_set), 'Деление выполняется только с нечёткими множествами'
         assert self.inverted == other.inverted, 'Невозможно выполнить операцию'
         self.m, self.M, self.a, self.b = self._truediv(other)
-        self.update_bounds()
+        self.updateBounds()
         self.calculateCurves()
         return self
     
@@ -139,7 +139,7 @@ class Fuzzy_set:
     def __ipow__(self, exp):
         assert isinstance(exp, int), 'A**X, X - целое число'        
         self.a, self.m, self.M, self.b = self._pow(exp)
-        self.update_bounds()
+        self.updateBounds()
         self.calculateCurves()
         return self
 
