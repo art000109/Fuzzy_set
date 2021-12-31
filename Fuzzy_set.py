@@ -121,10 +121,7 @@ class Fuzzy_set:
         return self
     
     def _pow(self, exp):
-        m = self.m
-        M = self.M
-        a = self.a
-        b = self.b
+        a, b, m, M = self.a, self.b, self.m, self.M
         for _ in range(exp-1):
             a = m**2 - (m - a)**2
             b = (M + b)**2 - M**2
