@@ -13,6 +13,14 @@ Implements support for basic operations:
 - Supremum
 - Infimum
 - Equality / inequality of sets
+- Inversion
+- Intersection
+- Union
+- Concentration
+- Dilatation
+- Finding the mean
+- Finding variance
+- Multiplication by a constant
 
 The library also allows you to:
 - Find the length of a set
@@ -22,7 +30,7 @@ The library also allows you to:
 - Display set
 
 ## Fuzzy field
-- The library also you to:
+The library also you to:
 - Add multiple sets to a field
 - Show all sets in the field
 - Clear field
