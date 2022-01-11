@@ -25,7 +25,6 @@ Implements support for basic operations:
 The library also allows you to:
 - Find the length of a set
 - Round borders
-- Check if the element is contained in the set (1, if the probability is not = 0)
 - Check the probability of finding an element in a set
 - Display set
 
