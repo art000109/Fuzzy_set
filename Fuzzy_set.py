@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
     
 class Fuzzy_set:  
     def __init__(self, m: float, M: float, a: float, b: float, inverted: bool = False):
