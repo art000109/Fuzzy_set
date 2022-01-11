@@ -1,13 +1,13 @@
-def сhewPark(self,*fuzzy_sets, w: float = 1):
+def сhewPark(*fuzzy_sets, w: float = 1):
     cp = []
     for fuzzy_set in fuzzy_sets:
         t1 = (fuzzy_set.bounds[0] + fuzzy_set.m +
             fuzzy_set.M + fuzzy_set.bounds[1]) / 4
         t2 = w * (fuzzy_set.m + fuzzy_set.M) / 2
         cp.append((t1 + t2, fuzzy_set))
-    return [i[1] for i in sorted(cp)]
+    return tuple(i[1] for i in sorted(cp))
 
-def chang(self, *fuzzy_sets):
+def chang(*fuzzy_sets):
     ch = []
     for fuzzy_set in fuzzy_sets:
         t = (fuzzy_set.M**2 +
@@ -17,16 +17,16 @@ def chang(self, *fuzzy_sets):
              fuzzy_set.m*fuzzy_set.bounds[0] -
              fuzzy_set.m**2) / 6
         ch.append((t, fuzzy_set))
-    return [i[1] for i in sorted(ch)]
+    return tuple(i[1] for i in sorted(ch))
 
-def kaufmanGupt(self, *fuzzy_sets):
+def kaufmanGupt(*fuzzy_sets):
     #TODO
     pass
 
-def jane(self, *fuzzy_sets):
+def jane(*fuzzy_sets):
     #TODO
     pass
 
-def duboisPrades(self, *fuzzy_sets):
+def duboisPrades(*fuzzy_sets):
     #TODO
     pass
