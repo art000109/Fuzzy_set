@@ -1,4 +1,4 @@
-def chuPark(self,*fuzzy_sets, w: float = 1):
+def сhewPark(self,*fuzzy_sets, w: float = 1):
     cp = []
     for fuzzy_set in fuzzy_sets:
         t1 = (fuzzy_set.bounds[0] + fuzzy_set.m +
@@ -7,7 +7,7 @@ def chuPark(self,*fuzzy_sets, w: float = 1):
         cp.append((t1 + t2, fuzzy_set))
     return [i[1] for i in sorted(cp)]
 
-def chung(self, *fuzzy_sets):
+def chang(self, *fuzzy_sets):
     ch = []
     for fuzzy_set in fuzzy_sets:
         t = (fuzzy_set.M**2 +
