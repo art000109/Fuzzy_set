@@ -46,6 +46,41 @@ class Fuzzy_set:
         x2 = (other.bn[1] - self.bn[0]) / (self.kn[0] - other.kn[1])
         return (x1, x2)
     
+    def _plot(self, other = None, k: float = 1, type: str = None) -> None:
+        bounds = (min(self.bounds[0], other.bounds[0]),
+                  max(self.bounds[1], other.bounds[1]))
+        X = tuple(i/10 for i in range(bounds[0]*10, bounds[1]*10+1))
+        if type == 'con' or type == 'dil':
+            if type == 'con':
+                assert k > 1, 'k < 1'
+            else:
+                assert k < 1, 'k > 1'
+            Y = tuple(self.probability(i)**k for i in X)
+        elif type == 'eq':
+            Y = tuple(1-abs(self.probability(i)-other.probability(i)) for i in X)
+        elif type == 'ne':
+            Y = tuple(abs(self.probability(i) - other.probability(i)) for i in X)
+        elif type == 'contains':
+            assert isinstance(other, Fuzzy_set)
+            Y = tuple(min(1, 1 - self.probability(i) + other.probability(i)) for i in X)
+        elif type == 'and':
+            assert isinstance(other, Fuzzy_set) or isinstance(other, float) and other < 1
+            if isinstance(other, Fuzzy_set):
+                Y = tuple(min(self.probability(i), other.probability(i)) for i in X)
+            else:
+                Y = tuple(min(other, self.probability(i)) for i in X)
+        elif type == 'or':
+            assert isinstance(other, Fuzzy_set) or isinstance(other, float) and other < 1
+            if isinstance(other, Fuzzy_set):
+                Y = tuple(max(self.probability(i), other.probability(i)) for i in X)
+            else:
+                Y = tuple(max(other, self.probability(i)) for i in X)
+
+        _, ax = plt.subplots()
+        ax.plot(X, Y)
+        ax.grid()
+        plt.show()
+    
     def _add(self, other) -> tuple:
         a = self.a + other.a
         b = self.b + other.b
@@ -163,24 +198,10 @@ class Fuzzy_set:
         return self
 
     def __eq__(self, other) -> None:
-        bounds = (min(self.bounds[0], other.bounds[0]),
-                  max(self.bounds[1], other.bounds[1]))
-        X = tuple(i/10 for i in range(bounds[0]*10, bounds[1]*10+1))
-        Y = tuple(1-abs(self.probability(i)-other.probability(i)) for i in X)
-        _, ax = plt.subplots()
-        ax.plot(X, Y)
-        ax.grid()
-        plt.show()
+        self._plot(other, type='eq')
 
     def __ne__(self, other) -> None:
-        bounds = (min(self.bounds[0], other.bounds[0]),
-                  max(self.bounds[1], other.bounds[1]))
-        X = tuple(i/10 for i in range(bounds[0]*10, bounds[1]*10+1))
-        Y = tuple(abs(self.probability(i) - other.probability(i)) for i in X)
-        _, ax = plt.subplots()
-        ax.plot(X, Y)
-        ax.grid()
-        plt.show()
+        self._plot(other, type='ne')
 
     def __hash__(self):
         return hash((self.m, self.M, self.a, self.b, self.inverted))
@@ -196,49 +217,19 @@ class Fuzzy_set:
         return Fuzzy_set(m, M, a, b)
 
     def __contains__(self, other) -> None:
-        bounds = (min(self.bounds[0], other.bounds[0]),
-                  max(self.bounds[1], other.bounds[1]))
-        X = tuple(i/10 for i in range(bounds[0]*10, bounds[1]*10+1))
-        Y = tuple(min(1, 1 - self.probability(i) + other.probability(i)) for i in X)
-        _, ax = plt.subplots()
-        ax.plot(X, Y)
-        ax.grid()
-        plt.show()
+        self._plot(other, type='contains')
 
     def __invert__(self):
         ''' Supplement A (Inversion A) '''
         return Fuzzy_set(self.m, self.M, self.a, self.b, inverted=True)
 
-    def _andOr(self, other, and_flag=True) -> None:
-        assert isinstance(other, Fuzzy_set) or isinstance(other, float) and other < 1
-        if isinstance(other, float):
-            bounds = self.bounds
-        else:
-            bounds = (min(self.bounds[0], other.bounds[0]),
-                  max(self.bounds[1], other.bounds[1]))
-        X = tuple(i/10 for i in range(bounds[0]*10, bounds[1]*10+1))
-        if and_flag:
-            if isinstance(other, Fuzzy_set):
-                Y = tuple(min(self.probability(i), other.probability(i)) for i in X)
-            else:
-                Y = tuple(min(other, self.probability(i)) for i in X)
-        else:
-            if isinstance(other, Fuzzy_set):
-                Y = tuple(max(self.probability(i), other.probability(i)) for i in X)
-            else:
-                Y = tuple(max(other, self.probability(i)) for i in X)
-        _, ax = plt.subplots()
-        ax.plot(X, Y)
-        ax.grid()
-        plt.show()
-
     def __and__(self, other) -> None:
         ''' Intersection of A '''
-        self._andOr(other)
+        self._plot(other, type='and')
 
     def __or__(self, other) -> None:
         ''' Union of A '''
-        self._andOr(other, and_flag=False)
+        self._plot(other, type='or')
 
     def mean(self) -> float:
         ''' Mean of A '''
@@ -250,25 +241,12 @@ class Fuzzy_set:
         a, b = (self.bounds[0], self.bounds[1])
         return ((b - a)**2 + 2*(b - a)*(self.M - self.m)
                 + 3*(self.M - self.m)**2)/24
-    
-    def conDil(self, k: float = 1, con=True) -> None:
-        bounds = self.bounds
-        X = tuple(i/10 for i in range(bounds[0]*10, bounds[1]*10+1))
-        if con:
-            assert k > 1, 'k > 1'
-        else:
-            assert k < 1, 'k < 1' 
-        Y = tuple(self.probability(i)**k for i in X)
-        _, ax = plt.subplots()
-        ax.plot(X, Y)
-        ax.grid()
-        plt.show()
 
     def con(self, k: float = 2) -> None:
-        self.conDil(k)
+        self._plot(k, type='con')
 
     def dil(self, k: float = 0.5) -> None:
-        self.conDil(k, con=False)
+        self._plot(k, type='dil')
 
     def probability(self, x: float, accuracy: int = 4) -> float:
         assert isinstance(x, int) or isinstance(x, float)
