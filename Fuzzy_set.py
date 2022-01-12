@@ -90,9 +90,14 @@ class Fuzzy_set:
 
         elif type == 'matmul_set':
             Y = tuple(self.probability(i) * other.probability(i) for i in X)
+        
+        elif type == 'addition':
+            Y = tuple(self.probability(i) + other.probability(i) - \
+                 self.probability(i)*other.probability(i) for i in X)
 
         _, ax = plt.subplots()
-        #ax.set_ylim(0, 1.1)
+        ax.set_xlim(bounds[0]-1, bounds[1]+1)
+        ax.set_ylim(0, 1.1)
         ax.plot(X, Y)
         ax.grid()
         plt.show()
@@ -252,6 +257,9 @@ class Fuzzy_set:
 
     def con(self, other: float = 2) -> None:
         self._plot(other, type='con')
+    
+    def addition(self, other):
+        self._plot(other, type='addition')
 
     def dil(self, other: float = 0.5) -> None:
         self._plot(other, type='dil')
