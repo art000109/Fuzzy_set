@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
     
 class Fuzzy_set:  
     def __init__(self, m: float, M: float, a: float, b: float, inverted: bool = False):
@@ -13,7 +14,6 @@ class Fuzzy_set:
 
     def _calculateCurves(self):
         self.kn, self.bn = [], []
-        
         if self.m == self.bounds[0]:
             self.kn.append(0)
         else:
@@ -31,12 +31,12 @@ class Fuzzy_set:
             for i in range(len(self.kn)):
                 self.kn[i] = -self.kn[i]
                 self.bn[i] = 1 - self.bn[i]
-
         self.kn = tuple(self.kn)
         self.bn = tuple(self.bn)
     
-    def _updateBounds(self) -> None:
+    def _updateSet(self):
         self.bounds = (self.m - self.a, self.M + self.b)
+        self._calculateCurves()
 
     def _trapezoidProbability(self, x: float, n: int) -> float:
         return self.kn[n] * x + self.bn[n]
@@ -46,29 +46,38 @@ class Fuzzy_set:
         x2 = (other.bn[1] - self.bn[0]) / (self.kn[0] - other.kn[1])
         return (x1, x2)
     
-    def _plot(self, other = None, k: float = 1, type: str = None) -> None:
-        bounds = (min(self.bounds[0], other.bounds[0]),
-                  max(self.bounds[1], other.bounds[1]))
-        X = tuple(i/10 for i in range(bounds[0]*10, bounds[1]*10+1))
+    def _plot(self, other = None, type: str = None) -> None:
+        if isinstance(other, Fuzzy_set):
+            bounds = (min(self.bounds[0], other.bounds[0]),
+                    max(self.bounds[1], other.bounds[1]))
+        else:
+            bounds = self.bounds
+
+        X = np.arange(bounds[0], bounds[1]+0.1, 0.1)
         if type == 'con' or type == 'dil':
             if type == 'con':
-                assert k > 1, 'k < 1'
+                assert other > 1, 'k < 1'
             else:
-                assert k < 1, 'k > 1'
-            Y = tuple(self.probability(i)**k for i in X)
+                assert other < 1, 'k > 1'
+            Y = tuple(self.probability(i) ** other for i in X)
+            
         elif type == 'eq':
             Y = tuple(1-abs(self.probability(i)-other.probability(i)) for i in X)
+
         elif type == 'ne':
             Y = tuple(abs(self.probability(i) - other.probability(i)) for i in X)
+
         elif type == 'contains':
             assert isinstance(other, Fuzzy_set)
             Y = tuple(min(1, 1 - self.probability(i) + other.probability(i)) for i in X)
+
         elif type == 'and':
             assert isinstance(other, Fuzzy_set) or isinstance(other, float) and other < 1
             if isinstance(other, Fuzzy_set):
                 Y = tuple(min(self.probability(i), other.probability(i)) for i in X)
             else:
                 Y = tuple(min(other, self.probability(i)) for i in X)
+
         elif type == 'or':
             assert isinstance(other, Fuzzy_set) or isinstance(other, float) and other < 1
             if isinstance(other, Fuzzy_set):
@@ -76,7 +85,14 @@ class Fuzzy_set:
             else:
                 Y = tuple(max(other, self.probability(i)) for i in X)
 
+        elif type == 'matmul_number':
+            Y = X * other
+
+        elif type == 'matmul_set':
+            Y = tuple(self.probability(i) * other.probability(i) for i in X)
+
         _, ax = plt.subplots()
+        #ax.set_ylim(0, 1.1)
         ax.plot(X, Y)
         ax.grid()
         plt.show()
@@ -97,8 +113,7 @@ class Fuzzy_set:
         assert isinstance(other, Fuzzy_set), 'Addition is performed only with fuzzy sets'
         assert self.inverted == other.inverted, 'Unable to perform operation'
         self.m, self.M, self.a, self.b = self._add(other)
-        self._updateBounds()
-        self._calculateCurves()
+        self._updateSet()
         return self
 
     def _sub(self, other) -> tuple:
@@ -117,8 +132,7 @@ class Fuzzy_set:
         assert isinstance(other, Fuzzy_set), 'Subtraction is performed only with fuzzy sets'
         assert self.inverted == other.inverted, 'Unable to perform operation'
         self.m, self.M, self.a, self.b = self._sub(other)
-        self._updateBounds()
-        self._calculateCurves()
+        self._updateSet()
         return self
 
     def _mul(self, other) -> tuple:
@@ -137,19 +151,15 @@ class Fuzzy_set:
         assert isinstance(other, Fuzzy_set), 'Multiplication is performed only with fuzzy sets'
         assert self.inverted == other.inverted, 'Unable to perform operation'
         self.m, self.M, self.a, self.b = self._mul(other)
-        self._updateBounds()
-        self._calculateCurves()
+        self._updateSet()
         return self
     
-    def __matmul__(self, exp: float) -> None:
-        assert isinstance(exp, float) and exp < 1
-        bounds = self.bounds
-        X = tuple(i/10 for i in range(bounds[0]*10, bounds[1]*10+1))
-        Y = tuple(self.probability(i) * exp for i in X)
-        _, ax = plt.subplots()
-        ax.plot(X, Y)
-        ax.grid()
-        plt.show()
+    def __matmul__(self, other) -> None:
+        assert isinstance(other, float) and other < 1 or isinstance(other, Fuzzy_set)
+        if isinstance(other, float):
+            self._plot(other, type='matmul_number')
+        else:
+            self._plot(other, type='matmul_set')
 
     def _truediv(self, other) -> tuple:
         a = (self.m * other.b + other.M * self.a) / (other.M**2 + other.M * other.b)
@@ -167,8 +177,7 @@ class Fuzzy_set:
         assert isinstance(other, Fuzzy_set), 'Division is performed only with fuzzy sets'
         assert self.inverted == other.inverted, 'Unable to perform operation'
         self.m, self.M, self.a, self.b = self._truediv(other)
-        self._updateBounds()
-        self._calculateCurves()
+        self._updateSet()
         return self
     
     def _pow(self, exp) -> tuple:
@@ -187,8 +196,7 @@ class Fuzzy_set:
     def __ipow__(self, exp):
         assert isinstance(exp, int), 'A**X, X - integer'        
         self.a, self.m, self.M, self.b = self._pow(exp)
-        self._updateBounds()
-        self._calculateCurves()
+        self._updateSet()
         return self
 
     def __len__(self) -> float:
@@ -242,11 +250,11 @@ class Fuzzy_set:
         return ((b - a)**2 + 2*(b - a)*(self.M - self.m)
                 + 3*(self.M - self.m)**2)/24
 
-    def con(self, k: float = 2) -> None:
-        self._plot(k, type='con')
+    def con(self, other: float = 2) -> None:
+        self._plot(other, type='con')
 
-    def dil(self, k: float = 0.5) -> None:
-        self._plot(k, type='dil')
+    def dil(self, other: float = 0.5) -> None:
+        self._plot(other, type='dil')
 
     def probability(self, x: float, accuracy: int = 4) -> float:
         assert isinstance(x, int) or isinstance(x, float)
