@@ -254,14 +254,14 @@ class Fuzzy_set:
 
     def mean(self) -> float:
         ''' Mean of A '''
-        a, b = self.bounds
-        return (a + 2 * (self.m + self.M) + b)/6
+        return (self.bounds[0] + 
+                2 * (self.m + self.M) + self.bounds[1])/6
 
     def var(self) -> float:
         ''' The variance of A '''
-        a, b = self.bounds
-        return ((b - a)**2 + 2 * (b - a) * (self.M - self.m)
-                + 3*(self.M - self.m)**2)/24
+        return ((self.bounds[1] - self.bounds[0])**2
+            + 2 * (self.bounds[1] - self.bounds[0]) *
+                (self.M - self.m) + 3*(self.M - self.m)**2)/24
 
     def con(self, other: float = 2) -> None:
         self._plot(other, type='con')
@@ -354,7 +354,7 @@ class Fuzzy_set:
     def coefs(self) -> tuple:
         return ((self.kn[0], self.kn[1]), (self.bn[0], self.bn[1]))
 
-    def draw_set(self, bounds: bool = True) -> None:
+    def draw_set(self, bounds: bool = True, title: str = 'Fuzzy set mapping') -> None:
         _, ax = plt.subplots()
         X = (self.bounds[0], self.m, self.M, self.bounds[1])
         Y = (0, 1, 1, 0)
@@ -369,7 +369,7 @@ class Fuzzy_set:
             if self.bounds[1] != self.M:
                 ax.plot((self.M, self.M), (0, 1), dashes=[6, 2])
         ax.set(xlabel='X', ylabel='Probability',
-                title='Fuzzy set mapping')
+                title=title)
         ax.grid()
         plt.show()
 
@@ -406,7 +406,7 @@ class Fuzzy_field:
                 print(f'{i}: {fuzzy_set.params()}')
                 i += 1
 
-    def draw_field(self, bounds=False) -> None:
+    def draw_field(self, bounds=False, title: str = 'Fuzzy set\'s field mapping') -> None:
         _, ax = plt.subplots()
         for fuzzy_set in self.field:
             if not fuzzy_set.inverted:
@@ -432,6 +432,6 @@ class Fuzzy_field:
                                 dashes=[6, 2])
                 
         ax.set(xlabel='X', ylabel='Probability',
-                title='Fuzzy set\'s field mapping')
+                title=title)
         ax.grid()
         plt.show()
