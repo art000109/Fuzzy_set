@@ -1,3 +1,5 @@
+from os import RWF_APPEND
+import re
 import matplotlib.pyplot as plt
 import numpy as np
     
@@ -24,8 +26,8 @@ class Fuzzy_set:
         else:
             self.kn.append(round(-1/self.b, 7))
 
-        self.bn = [-self.kn[0] * (self.bounds[0]),
-                   1 - self.kn[1] * self.M]
+        self.bn = [round(-self.kn[0] * (self.bounds[0]), 7),
+                   round(1 - self.kn[1] * self.M, 7)]
         
         if self.inverted:
             for i in range(len(self.kn)):
@@ -94,6 +96,8 @@ class Fuzzy_set:
         elif type == 'addition':
             Y = tuple(self.probability(i) + other.probability(i) - \
                  self.probability(i)*other.probability(i) for i in X)
+        elif type == 'floordiv':
+            Y = tuple(self.probability(i) / other.probability(i) for i in X)
 
         _, ax = plt.subplots()
         ax.set_xlim(bounds[0]-1, bounds[1]+1)
@@ -184,6 +188,10 @@ class Fuzzy_set:
         self.m, self.M, self.a, self.b = self._truediv(other)
         self._updateSet()
         return self
+
+    def __floordiv__(self, other):
+        assert isinstance(other, Fuzzy_set), 'Division is performed only with fuzzy sets'
+        self._plot(other, type='floordiv')
     
     def _pow(self, exp) -> tuple:
         a, b, m, M = self.a, self.b, self.m, self.M
@@ -246,13 +254,13 @@ class Fuzzy_set:
 
     def mean(self) -> float:
         ''' Mean of A '''
-        a, b = (self.bounds[0], self.bounds[1])
-        return (a + 2*self.m + 2*self.M + b)/6
+        a, b = self.bounds
+        return (a + 2 * (self.m + self.M) + b)/6
 
     def var(self) -> float:
         ''' The variance of A '''
-        a, b = (self.bounds[0], self.bounds[1])
-        return ((b - a)**2 + 2*(b - a)*(self.M - self.m)
+        a, b = self.bounds
+        return ((b - a)**2 + 2 * (b - a) * (self.M - self.m)
                 + 3*(self.M - self.m)**2)/24
 
     def con(self, other: float = 2) -> None:
@@ -281,38 +289,54 @@ class Fuzzy_set:
         if self.inverted == other.inverted:
             if (self.m <= other.m and self.M >= other.m or
                 self.m >= other.m  and self.m <= other.M):
+                if self.inverted:
+                    return 0
                 return 1
             elif (self.bounds[1] <= other.bounds[0] or
                 self.bounds[0] >= other.bounds[1]):
+                if self.inverted:
+                    return 1
                 return 0
         else:
             if (self.bounds[0] > other.m or
                 self.bounds[1] < other.M):
-                return 1
+                if self.inverted:
+                    return 1
+                return 0
             if (self.m <= other.bounds[0] or
                 self.M >= other.bounds[1]):
-                return 0
+                if self.inverted:
+                    return 0
+                return 1
         
         x1, x2 = self._boundsIntersection(other)
-        y1 = self.kn[1] * x1 + self.bn[1]
-        y2 = self.kn[0] * x2 + self.bn[0]
-        return round(max(y1, y2), 4)
+        y1 = round(self.kn[1] * x1 + self.bn[1], 4)
+        y2 = round(self.kn[0] * x2 + self.bn[0], 4)
+        if 0 <= y1 <= 1 and 0 <= y2 <= 1:
+            return max(y1, y2)
+        elif 0 <= y1 <= 1:
+            return y1
+        return y2
 
     def inf(self, other) -> float:
         if self.inverted == other.inverted:
             return 0
         else:
-            if (self.m <= other.bounds[0] or
-                self.M >= other.bounds[1]):
+            if (self.m > other.bounds[0] or
+                self.M < other.bounds[1]):
                 return 0
-            elif (self.bounds[0] > other.m or
-                self.bounds[1] < other.M):
+            elif (self.bounds[0] >= other.m or
+                self.bounds[1] <= other.M):
                 return 1
 
         x1, x2 = self._boundsIntersection(other)
-        y1 = self.kn[1] * x1 + self.bn[1]
-        y2 = self.kn[0] * x2 + self.bn[0]
-        return round(min(y1, y2), 4)
+        y1 = round(self.kn[1] * x1 + self.bn[1], 4)
+        y2 = round(self.kn[0] * x2 + self.bn[0], 4)
+        if 0 <= y1 <= 1 and 0 <= y2 <= 1:
+            return round(max(y1, y2), 4)
+        elif 0 <= y1 <= 1:
+            return y1
+        return y2
     
     def core(self) -> tuple:
         return (self.m, self.M)
