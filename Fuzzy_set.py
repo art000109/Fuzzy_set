@@ -1,11 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import math
     
 class Fuzzy_set:  
     def __init__(self, m: float, M: float, a: float, b: float, inverted: bool = False):
+        assert all([n for n in (m, M, a, b) if isinstance(n, float) or isinstance(n, int)]), '(m, M, a, b) - float or int numbers'
+        assert m <= M, 'The condition m > M - Invalid'
         assert m != M or not (a == b == 0), 'Configuration (m, m, 0, 0) - Invalid'
-        assert m <= M, 'The condition m <= M'
-        assert not (a < 0 or b < 0), 'Uncertainty bounds a, b cannot be < 0'
+        assert a > 0 and b > 0, 'Uncertainty bounds a, b cannot be < 0'
         self.m, self.M = m, M
         self.a, self.b = a, b
         self.inverted = inverted
@@ -50,6 +52,9 @@ class Fuzzy_set:
         if isinstance(other, Fuzzy_set):
             bounds = (min(self.bounds[0], other.bounds[0]),
                     max(self.bounds[1], other.bounds[1]))
+        elif isinstance(other, tuple):
+            bounds = (min(fs.bounds[0] for fs in list(other)+[self]),
+                    max(fs.bounds[1] for fs in list(other)+[self]))
         else:
             bounds = self.bounds
 
@@ -60,43 +65,30 @@ class Fuzzy_set:
             else:
                 assert other < 1, 'k > 1'
             Y = tuple(self.probability(i) ** other for i in X)
-            
         elif type == 'eq':
-            Y = tuple(1-abs(self.probability(i)-other.probability(i)) for i in X)
-
+            Y = tuple(1-abs(self.probability(i) - other.probability(i)) for i in X)
         elif type == 'ne':
             Y = tuple(abs(self.probability(i) - other.probability(i)) for i in X)
-
         elif type == 'contains':
-            assert isinstance(other, Fuzzy_set)
-            Y = tuple(min(1, 1 - self.probability(i) + other.probability(i)) for i in X)
-
-        elif type == 'and':
-            assert isinstance(other, Fuzzy_set) or isinstance(other, float) and other < 1
-            if isinstance(other, Fuzzy_set):
-                Y = tuple(min(self.probability(i), other.probability(i)) for i in X)
-            else:
-                Y = tuple(min(other, self.probability(i)) for i in X)
-
-        elif type == 'or':
-            assert isinstance(other, Fuzzy_set) or isinstance(other, float) and other < 1
-            if isinstance(other, Fuzzy_set):
-                Y = tuple(max(self.probability(i), other.probability(i)) for i in X)
-            else:
-                Y = tuple(max(other, self.probability(i)) for i in X)
-
+            other = tuple(list(other) + [self])
+            Y = tuple(min(1, 1 - sum(fs.probability(i) for fs in other)) for i in X)
         elif type == 'matmul_number':
-            Y = X * other
-
+            Y = tuple(min(self.probability(i) * other, 1) for i in X)
         elif type == 'matmul_set':
-            Y = tuple(self.probability(i) * other.probability(i) for i in X)
-        
+            other = tuple(list(other) + [self])
+            Y = tuple(math.prod(tuple(fs.probability(i) for fs in other)) for i in X)
         elif type == 'addition':
             Y = tuple(self.probability(i) + other.probability(i) - \
-                 self.probability(i)*other.probability(i) for i in X)
+                 self.probability(i) * other.probability(i) for i in X)
         elif type == 'floordiv':
-            Y = tuple(self.probability(i) / other.probability(i) for i in X)
-
+            Y = tuple(min(self.probability(i) / other.probability(i), 1) if other.probability(i) > 0 else 0 for i in X )
+        elif type == 'intersect' or type == 'union':
+            other = tuple(list(other) + [self])
+            if type == 'intersect':
+                Y = tuple(min(tuple(fs.probability(i) for fs in other)) for i in X)
+            else:
+                Y = tuple(max(tuple(fs.probability(i) for fs in other)) for i in X)
+                
         _, ax = plt.subplots()
         ax.set_xlim(bounds[0]-1, bounds[1]+1)
         ax.set_ylim(0, 1.1)
@@ -192,7 +184,7 @@ class Fuzzy_set:
         self._plot(other, type='floordiv')
     
     def _pow(self, exp) -> tuple:
-        a, b, m, M = self.a, self.b, self.m, self.M
+        m, M, a, b = self.params()
         for _ in range(exp-1):
             a = m**2 - (m - a)**2
             b = (M + b)**2 - M**2
@@ -235,20 +227,9 @@ class Fuzzy_set:
         M = round(self.M, n)
         return Fuzzy_set(m, M, a, b)
 
-    def __contains__(self, other) -> None:
-        self._plot(other, type='contains')
-
     def __invert__(self):
         ''' Supplement A (Inversion A) '''
         return Fuzzy_set(self.m, self.M, self.a, self.b, inverted=True)
-
-    def __and__(self, other) -> None:
-        ''' Intersection of A '''
-        self._plot(other, type='and')
-
-    def __or__(self, other) -> None:
-        ''' Union of A '''
-        self._plot(other, type='or')
 
     def mean(self) -> float:
         ''' Mean of A '''
@@ -261,14 +242,38 @@ class Fuzzy_set:
             + 2 * (self.bounds[1] - self.bounds[0]) *
                 (self.M - self.m) + 3*(self.M - self.m)**2)/24
 
-    def con(self, other: float = 2) -> None:
-        self._plot(other, type='con')
+    def con(self, k: float = 2) -> None:
+        assert isinstance(k, float) and k > 1, 'k < 1'
+        self._plot(k, type='con')
+    
+    def dil(self, k: float = 0.5) -> None:
+        assert isinstance(k, float) and k < 1, 'k < 1'
+        assert k > 0, 'k < 0'
+        self._plot(k, type='dil')
+
+    def contains(self, *other) -> None:
+        assert tuple(i for i in other if isinstance(i, Fuzzy_set))
+        self._plot(other, type='contains')
     
     def addition(self, other):
         self._plot(other, type='addition')
 
-    def dil(self, other: float = 0.5) -> None:
-        self._plot(other, type='dil')
+    def intersect(self, *other) -> None:
+        ''' Intersection of A '''
+        assert tuple(i for i in other if isinstance(i, Fuzzy_set)), 'Only Fuzzy sets allowed'
+        self._plot(other, type='intersect')
+
+    def union(self, *other) -> None:
+        ''' Union of A '''
+        assert tuple(i for i in other if isinstance(i, Fuzzy_set)), 'Only Fuzzy sets allowed'
+        self._plot(other, type='union')
+
+    def mul(self, *other) -> None:
+        assert isinstance(other, float) and other < 1 or tuple(i for i in other if isinstance(i, Fuzzy_set))
+        if isinstance(*other, float) or isinstance(*other, int):
+            self._plot(other, type='matmul_number')
+        else:
+            self._plot(other, type='matmul_set')
 
     def probability(self, x: float, accuracy: int = 4) -> float:
         assert isinstance(x, int) or isinstance(x, float)
@@ -396,9 +401,9 @@ class Fuzzy_field:
 
     def field_info(self) -> None:
         if not len(self.field):
-            print('Поле пустое')
+            print('Field is empty')
         else:
-            print(f'{len(self.field)} множества:')
+            print(f'{len(self.field)} sets:')
             i = 1
             for fuzzy_set in self.field:
                 print(f'{i}: {fuzzy_set.params()}')
