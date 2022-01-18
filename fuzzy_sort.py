@@ -1,3 +1,5 @@
+from Fuzzy_set import Fuzzy_set
+
 def сhewPark(*fuzzy_sets, w: float = 1) -> tuple:
     cp = []
     for fuzzy_set in fuzzy_sets:
