@@ -1,5 +1,5 @@
 ```math
 SE = \frac{\sigma}{\sqrt{n}}
+$`\sqrt{2}`$
 ```
 
-$`\sqrt{2}`$
