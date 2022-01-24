@@ -36,27 +36,27 @@ def kaufmanGupt(*fuzzy_sets) -> tuple:
     return tuple(fuzzy_sets)
 
 def jane(m: float, M: float, a: float, b: float, *fuzzy_sets) -> tuple:
-    assert all([fs for fs in fuzzy_sets if not fs.inverted]), 'All sets must have the same inverse'
-    assert all([fs for fs in fuzzy_sets if fs.inverted]), 'All sets must have the same inverse'
-    J = []
-    if m == float('inf') or a == float('inf'):
-        m, a = 0, 0
-    elif M == float('inf') or b == float('inf'):
-        M, b = 0, 0
+    assert (all(tuple(fs if fs.inverted else None for fs in fuzzy_sets)) or
+            all(tuple(fs if not fs.inverted else None for fs in fuzzy_sets))), 'All sets must be equally inverted'
+    if (m, a) == (float('inf'), float('inf')):
+        m, a, side = 0, 0, 1
+    elif (M, b) == (float('inf'), float('inf')):
+        M, b, side = 0, 0, 0
     Jane = Fuzzy_set(m, M, a, b, fuzzy_sets[0].inverted)
+    J = []
     for fs in fuzzy_sets:
         if fs.m >= Jane.m:
             J.append((fs.M, fs))
         elif fs.bounds[0] > Jane.bounds[0]: 
-            x1 = round((Jane.bn[0] - fs.bn[1]) / (fs.kn[1] - Jane.kn[0]), 3)
-            x2 = round((Jane.bn[0] - fs.bn[0]) / (fs.kn[0] - Jane.kn[0]), 3)
+            x1 = round((Jane.bn[side] - fs.bn[1]) / (fs.kn[1] - Jane.bn[side]), 3)
+            x2 = round((Jane.bn[side] - fs.bn[0]) / (fs.kn[0] - Jane.bn[side]), 3)
             J.append((max(x1, x2), fs))
         elif fs.bounds[1] > Jane.bounds[0]:
-            x = round((Jane.bn[0] - fs.bn[1]) / (fs.kn[1] - Jane.kn[0]), 3)
+            x = round((Jane.bn[side] - fs.bn[1]) / (fs.kn[1] - Jane.bn[side]), 3)
             J.append((x, fs))
         else:
             J.append((Jane.bounds[0], fs))
-    return tuple(i[1] for i in sorted(J))
+    return tuple(fs[1] for fs in sorted(J))
 
 def duboisPrades(*fuzzy_sets) -> tuple:
     #TODO
