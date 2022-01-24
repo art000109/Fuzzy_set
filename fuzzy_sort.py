@@ -1,4 +1,4 @@
-from Fuzzy_set import Fuzzy_set, Fuzzy_field
+from Fuzzy_set import Fuzzy_set
 
 def сhewPark(*fuzzy_sets, w: float = 1) -> tuple:
     cp = []
@@ -61,8 +61,3 @@ def jane(m: float, M: float, a: float, b: float, *fuzzy_sets) -> tuple:
 def duboisPrades(*fuzzy_sets) -> tuple:
     #TODO
     pass
-A=Fuzzy_set(5,5,2,4)
-B=Fuzzy_set(7,7,4,1)
-C=Fuzzy_set(6,6,5,4)
-Q=Fuzzy_field(A,B,C)
-Q.draw_field()

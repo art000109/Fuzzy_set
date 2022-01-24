@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import math
     
 class Fuzzy_set:  
     def __init__(self, m: float, M: float, a: float, b: float, inverted: bool = False):
@@ -14,7 +13,7 @@ class Fuzzy_set:
         self.bounds = (self.m - self.a, self.M + self.b)
         self._calculateCurves()
 
-    def _calculateCurves(self):
+    def _calculateCurves(self) -> None:
         self.kn, self.bn = [], []
         if self.m == self.bounds[0]:
             self.kn.append(0)
@@ -36,7 +35,7 @@ class Fuzzy_set:
         self.kn = tuple(self.kn)
         self.bn = tuple(self.bn)
     
-    def _updateSet(self):
+    def _updateSet(self) -> None:
         self.bounds = (self.m - self.a, self.M + self.b)
         self._calculateCurves()
 
@@ -52,12 +51,13 @@ class Fuzzy_set:
         if isinstance(other, Fuzzy_set):
             bounds = (min(self.bounds[0], other.bounds[0]),
                     max(self.bounds[1], other.bounds[1]))
+        elif (len(other) == 1 and (isinstance(other, int) or isinstance(other, float) or
+                isinstance(*other, int) or isinstance(*other, float))):
+            bounds = self.bounds
         elif isinstance(other, tuple):
             bounds = (min(fs.bounds[0] for fs in list(other)+[self]),
                     max(fs.bounds[1] for fs in list(other)+[self]))
-        elif isinstance(other, int) or isinstance(other, float):
-            bounds = self.bounds
-
+        
         X = np.arange(bounds[0], bounds[1]+0.1, 0.1)
         
         if type == 'con' or type == 'dil':
@@ -68,36 +68,36 @@ class Fuzzy_set:
             Y = abs(self.probability(X) - other.probability(X))
         elif type == 'contains':
             other = tuple(list(other) + [self])
-            #Y = tuple(min(1, 1 - sum(fs.probability(i) for fs in other)) for i in X) #TODO#
-            #print(type(other))
-            print(type1(other))
-            Y = (1 - np.array([fs.probability(X) for fs in other]).sum(axis=0))
-            print(Y)
+            min_array = (1 - np.array([fs.probability(X) for fs in other]).sum(axis=0))
+            Y = np.amin(np.stack([min_array, np.ones_like(min_array, dtype=float)]), axis=0)
         elif type == 'matmul_number':
-            Y = tuple(min(self.probability(i) * other, 1) for i in X) #TODO
+            min_array = self.probability(X) * other
+            Y = np.amin(np.stack([min_array, np.ones_like(min_array, dtype=float)]), axis=0)
         elif type == 'matmul_set':
             other = tuple(list(other) + [self])
-            Y = tuple(math.prod(tuple(fs.probability(i) for fs in other)) for i in X) #TODO
+            Y = np.prod([fs.probability(X) for fs in other], axis=0)
         elif type == 'addition':
-            Y = tuple(self.probability(i) + other.probability(i) - \
-                 self.probability(i) * other.probability(i) for i in X) #TODO
+            Y = self.probability(X) + other.probability(X) - self.probability(X) * other.probability(X)
         elif type == 'floordiv':
-            Y = tuple(min(self.probability(i) / 
-                math.prod(tuple(fs.probability(i) for fs in other)) 
-                if all(tuple(fs.probability(i) for fs in other)) 
-                else self.probability(i), 1) for i in X) #TODO
+            temp = np.array([fs.probability(X) for fs in other])
+            if temp.shape[0] == 1:
+                temp = temp.reshape(temp.shape[1],)
+            temp0 = np.prod(temp, axis=0)
+            temp1 = np.where(temp0 == 0, self.probability(X), temp0)
+            min_array = self.probability(X) / np.where(temp1 == 0, 1, temp1)
+            Y = np.amin(np.stack([min_array, np.ones_like(min_array)]), axis=0)
         elif type == 'intersect' or type == 'union':
             other = tuple(list(other) + [self])
             if type == 'intersect':
-                Y = tuple(min(tuple(fs.probability(i) for fs in other)) for i in X) #TODO
+                Y = np.amin(np.array([fs.probability(X) for fs in other]), axis=0)
             else:
-                Y = tuple(max(tuple(fs.probability(i) for fs in other)) for i in X) #TODO
+                Y = np.amax(np.array([fs.probability(X) for fs in other]), axis=0)
         elif type == 'substract':
             Y = tuple(max(self.probability(i) - sum(tuple(fs.probability(i) for fs in other)), 0) for i in X)
         elif type == 'trunc':
-            Y = tuple(min(self.probability(i), other) for i in X)
+            Y = np.amin(np.stack([self.probability(X), np.full_like(self.probability(X), other, dtype=float)]))
         elif type == 'extension':
-            Y = tuple(max(self.probability(i), other) for i in X)
+            Y = np.amax(np.stack([self.probability(X), np.full_like(self.probability(X), other, dtype=float)]))
                 
         _, ax = plt.subplots()
         ax.set_xlim(bounds[0]-1, bounds[1]+1)
@@ -181,10 +181,6 @@ class Fuzzy_set:
         self.m, self.M, self.a, self.b = self._truediv(other)
         self._updateSet()
         return self
-
-    def __floordiv__(self, *other):
-        assert tuple(i for i in other if isinstance(i, Fuzzy_set)), 'Division is performed only with fuzzy sets'
-        self._plot(other, type='floordiv')
     
     def _pow(self, exp) -> tuple:
         m, M, a, b = self.params()
@@ -281,11 +277,16 @@ class Fuzzy_set:
     
     def mul(self, *other) -> None:
         ''' Algebraic multiplication of fuzzy sets '''
-        assert isinstance(*other, float) and other < 1 or tuple(i for i in other if isinstance(i, Fuzzy_set))
+        print(other)
+        assert isinstance(*other, float) or isinstance(*other, int) or tuple(i for i in other if isinstance(i, Fuzzy_set))
         if isinstance(*other, float) or isinstance(*other, int):
             self._plot(other, type='matmul_number')
         else:
             self._plot(other, type='matmul_set')
+    
+    def division(self, *other):
+        assert tuple(i for i in other if isinstance(i, Fuzzy_set)), 'Division is performed only with fuzzy sets'
+        self._plot(other, type='floordiv')
         
     def trunc(self, k: float) -> None:
         ''' Truncation of fuzzy set '''
@@ -478,11 +479,3 @@ class Fuzzy_field:
                 title=title)
         ax.grid()
         plt.show()
-A = Fuzzy_set(5,6,1,1)
-B = Fuzzy_set(4,5,2,3)
-C = Fuzzy_set(5,6,3,2)
-#A.draw_set()
-Q=Fuzzy_field(A,B,C)
-#Q.draw_field()
-type1 = type
-A.contains(B,C)
