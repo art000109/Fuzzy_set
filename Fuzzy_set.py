@@ -478,3 +478,11 @@ class Fuzzy_field:
                 title=title)
         ax.grid()
         plt.show()
+A = Fuzzy_set(5,6,1,1)
+B = Fuzzy_set(4,5,2,3)
+C = Fuzzy_set(5,6,3,2)
+#A.draw_set()
+Q=Fuzzy_field(A,B,C)
+#Q.draw_field()
+type1 = type
+A.contains(B,C)
