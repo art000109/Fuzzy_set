@@ -8,8 +8,6 @@ Implements support for basic operations:
 - Multiplication of fuzzy sets
 - Exponentiation
 - Fuzzy set completion
-- Finding it mean
-- Finding his variance
 - Supremum
 - Infimum
 - Equality / inequality of sets
