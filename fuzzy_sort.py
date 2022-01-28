@@ -1,15 +1,19 @@
 from Fuzzy_set import Fuzzy_set
 
 def сhewPark(*fuzzy_sets, w: float = 1) -> tuple:
-    cp = []
+    if not all(tuple(1 if isinstance(i, Fuzzy_set) else None for i in fuzzy_sets)):
+            raise TypeError('Only Fuzzy sets allowed')
+    CP = []
     for fuzzy_set in fuzzy_sets:
         t1 = (fuzzy_set.bounds[0] + fuzzy_set.m +
             fuzzy_set.M + fuzzy_set.bounds[1]) / 4
         t2 = w * (fuzzy_set.m + fuzzy_set.M) / 2
-        cp.append((t1 + t2, fuzzy_set))
-    return tuple(i[1] for i in sorted(cp))
+        CP.append((t1 + t2, fuzzy_set))
+    return tuple(i[1] for i in sorted(CP))
 
 def chang(*fuzzy_sets) -> tuple:
+    if not all(tuple(1 if isinstance(i, Fuzzy_set) else None for i in fuzzy_sets)):
+            raise TypeError('Only Fuzzy sets allowed')
     CH = []
     for fs in fuzzy_sets:
         t = (fs.M**2 +
@@ -22,10 +26,11 @@ def chang(*fuzzy_sets) -> tuple:
     return tuple(i[1] for i in sorted(CH))
 
 def kaufmanGupt(*fuzzy_sets) -> tuple:
+    if not all(tuple(1 if isinstance(i, Fuzzy_set) else None for i in fuzzy_sets)):
+            raise TypeError('Only Fuzzy sets allowed')
     KG = [((fs.bounds[0] + fs.bounds[1] + 2 * (fs.m + fs.M))/6,
         (fs.M + fs.bounds[1])/2,
         fs.bounds[1] - fs.bounds[0]) for fs in fuzzy_sets]
-
     for i in range(len(fuzzy_sets) - 1):
        for j in range(len(fuzzy_sets) - i - 1):
            if (KG[j][0] > KG[j + 1][0] or
@@ -36,8 +41,10 @@ def kaufmanGupt(*fuzzy_sets) -> tuple:
     return tuple(fuzzy_sets)
 
 def jane(m: float, M: float, a: float, b: float, *fuzzy_sets) -> tuple:
-    if not(all(tuple(fs if fs.inverted else None for fs in fuzzy_sets)) or
-            all(tuple(fs if not fs.inverted else None for fs in fuzzy_sets))):
+    if not all(tuple(1 if isinstance(i, Fuzzy_set) else None for i in fuzzy_sets)):
+            raise TypeError('Only Fuzzy sets allowed')
+    if not(all(tuple(1 if fs.inverted else None for fs in fuzzy_sets)) or
+            all(tuple(1 if not fs.inverted else None for fs in fuzzy_sets))):
         raise TypeError('All sets must be equally inverted')
     if m == float('inf'):
         m, a = 0, 0
@@ -61,6 +68,11 @@ def jane(m: float, M: float, a: float, b: float, *fuzzy_sets) -> tuple:
     return tuple(fs[1] for fs in sorted(J))
 
 def duboisPrades(*fuzzy_sets) -> tuple:
+    if not all(tuple(1 if isinstance(i, Fuzzy_set) else None for i in fuzzy_sets)):
+            raise TypeError('Only Fuzzy sets allowed')
+    if not(all(tuple(1 if fs.inverted else None for fs in fuzzy_sets)) or
+            all(tuple(1 if not fs.inverted else None for fs in fuzzy_sets))):
+        raise TypeError('All sets must be equally inverted')
     DP, DP_temp = [], set()
     for fs in fuzzy_sets:
         temp = []

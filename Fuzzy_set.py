@@ -320,6 +320,7 @@ class Fuzzy_set:
             self._plot(other, type='matmul_set')
     
     def division(self, *other) -> None:
+        ''' Algebraic division of fuzzy sets '''
         if not (len(tuple(i for i in other if isinstance(i, Fuzzy_set))) == len(other)):
             raise TypeError('Division is performed only with fuzzy sets')
         self._plot(other, type='division')
@@ -331,6 +332,7 @@ class Fuzzy_set:
         self._plot(k, type='trunc')
     
     def extension(self, k: float) -> None:
+        ''' Extension of fuzzy set '''
         if not (isinstance(k, float) and 0 < k < 1):
             raise ValueError('k must be between (0, 1)')
         self._plot(k, type='extension')
@@ -406,6 +408,7 @@ class Fuzzy_set:
         return min(self.probability(x) for x in X)
     
     def core(self, step: float = None) -> tuple:
+        ''' Get 2 points (m, M) '''
         if not step:
             return (self.m, self.M)
         else:
@@ -417,6 +420,7 @@ class Fuzzy_set:
                 return np.arange(self.M, self.m + step, step)
     
     def support(self, step: float = None) -> tuple:
+        ''' Get 2 points (m-a, M+b) '''
         if not step:
             return (self.bounds[0], self.bounds[1])
         else:
@@ -428,6 +432,7 @@ class Fuzzy_set:
                 return np.arange(self.bounds[1], self.bounds[0] + step, step)
 
     def a_level(self, a: float, step: float = None) -> tuple:
+        ''' Get such 2 points for which the probability of occurrence is equal to a '''
         if not(0 < a < 1):
             raise ValueError('a must be between (0, 1)')
         if not step:
@@ -442,12 +447,15 @@ class Fuzzy_set:
                 return np.arange(round((self.M+self.bounds[1])*a, 3), round((self.bounds[0]+self.m)*a, 3) + step, step)
         
     def transition_points(self, step: float = None) -> tuple:
+        ''' Get such 2 points for which the probability of occurrence is equal to 0.5 '''
         return self.a_level(0.5, step)
 
-    def params(self) -> tuple: 
+    def params(self) -> tuple:
+        ''' Get main parameters of the set '''
         return (self.m, self.M, self.a, self.b, self.inverted)
 
     def coefs(self) -> tuple:
+        ''' coefficients of straight lines of set boundaries (k0, k1), (b0, b1) '''
         return ((self.kn[0], self.kn[1]), (self.bn[0], self.bn[1]))
 
     def draw_set(self, bounds: bool = True, title: str = 'Fuzzy set mapping') -> None:
@@ -496,9 +504,11 @@ class Fuzzy_field:
         return f'Fuzzy_field({len(self.field)} set)'
 
     def clear(self) -> None:
+        ''' Clear the fuzzy field '''
         self.field = []
 
     def add(self, *fuzzy_sets) -> None:
+        ''' Add other fuzzy sets'''
         if not all(tuple(1 if isinstance(i, Fuzzy_set) else None for i in fuzzy_sets)):
             raise TypeError('Only Fuzzy sets allowed')
         for fuzzy_set in fuzzy_sets:
@@ -506,6 +516,7 @@ class Fuzzy_field:
         self.field = list(set(tuple(self.field)))
 
     def field_info(self) -> None:
+        ''' Print information about fuzzy sets'''
         if not len(self.field):
             print('Field is empty')
         else:
