@@ -3,7 +3,7 @@ import numpy as np
     
 class Fuzzy_set:  
     def __init__(self, m: float, M: float, a: float, b: float, inverted: bool = False):
-        if not(all([1 if isinstance(n, float) or isinstance(n, int) else None for n in (m, M, a, b)])):
+        if not(all([1 if isinstance(n, float) or isinstance(n, int) else 0 for n in (m, M, a, b)])):
             raise ValueError('(m, M, a, b) - float or int numbers')
         if m > m:
             raise ValueError('The condition m > M - Invalid')
@@ -282,19 +282,19 @@ class Fuzzy_set:
         self._plot(k, type='dil', accuracy=accuracy)
 
     def contains(self, *other, accuracy: float = 2) -> None:
-        if not all(tuple(i if isinstance(i, Fuzzy_set) else None for i in other)):
+        if not all(tuple(1 if isinstance(i, Fuzzy_set) else 0 for i in other)):
             raise TypeError('Only Fuzzy sets allowed')
         self._plot(other, type='contains', accuracy=accuracy)
 
     def intersect(self, *other, accuracy: float = 2) -> None:
         ''' Intersection of A '''
-        if not all(tuple(i if isinstance(i, Fuzzy_set) else None for i in other)):
+        if not all(tuple(1 if isinstance(i, Fuzzy_set) else 0 for i in other)):
             raise TypeError('Intersection is performed only with fuzzy sets')
         self._plot(other, type='intersect', accuracy=accuracy)
 
     def union(self, *other, accuracy: float = 2) -> None:
         ''' Union of A '''
-        if not all(tuple(i if isinstance(i, Fuzzy_set) else None for i in other)):
+        if not all(tuple(1 if isinstance(i, Fuzzy_set) else 0 for i in other)):
             raise TypeError('Union is performed only with fuzzy sets')
         self._plot(other, type='union', accuracy=accuracy)
     
@@ -479,7 +479,7 @@ class Fuzzy_set:
 
 class Fuzzy_field:
     def __init__(self, *fuzzy_sets):
-        if not all(tuple(1 if isinstance(i, Fuzzy_set) else None for i in fuzzy_sets)):
+        if not all(tuple(1 if isinstance(i, Fuzzy_set) else 0 for i in fuzzy_sets)):
             raise TypeError('Only Fuzzy sets allowed')
         self.field = []
         for fuzzy_set in fuzzy_sets:
@@ -509,7 +509,7 @@ class Fuzzy_field:
 
     def add(self, *fuzzy_sets) -> None:
         ''' Add other fuzzy sets'''
-        if not all(tuple(1 if isinstance(i, Fuzzy_set) else None for i in fuzzy_sets)):
+        if not all(tuple(1 if isinstance(i, Fuzzy_set) else 0 for i in fuzzy_sets)):
             raise TypeError('Only Fuzzy sets allowed')
         for fuzzy_set in fuzzy_sets:
             self.field.append(fuzzy_set)
