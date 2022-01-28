@@ -35,7 +35,7 @@ A1 /= B1
 G = A**3
 A1 **= 3
 
-''' Mean and variance of fuzzy set'''
+''' Mean and variance of fuzzy set '''
 A.mean()
 A.var()
 
