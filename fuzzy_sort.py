@@ -31,6 +31,7 @@ def kaufmanGupt(*fuzzy_sets) -> tuple:
     KG = [((fs.bounds[0] + fs.bounds[1] + 2 * (fs.m + fs.M))/6,
         (fs.M + fs.bounds[1])/2,
         fs.bounds[1] - fs.bounds[0]) for fs in fuzzy_sets]
+    fuzzy_sets = list(fuzzy_sets)
     for i in range(len(fuzzy_sets) - 1):
        for j in range(len(fuzzy_sets) - i - 1):
            if (KG[j][0] > KG[j + 1][0] or
@@ -57,11 +58,11 @@ def jane(m: float, M: float, a: float, b: float, *fuzzy_sets) -> tuple:
         if fs.m >= Jane.m:
             J.append((fs.M, fs))
         elif fs.bounds[0] > Jane.bounds[0]: 
-            x1 = round((Jane.bn[side] - fs.bn[1]) / (fs.kn[1] - Jane.bn[side]), 3)
-            x2 = round((Jane.bn[side] - fs.bn[0]) / (fs.kn[0] - Jane.bn[side]), 3)
+            x1 = round((Jane.bn[side] - fs.bn[1]) / (fs.kn[1] - Jane.kn[side]), 3)
+            x2 = round((Jane.bn[side] - fs.bn[0]) / (fs.kn[0] - Jane.kn[side]), 3)
             J.append((max(x1, x2), fs))
         elif fs.bounds[1] > Jane.bounds[0]:
-            x = round((Jane.bn[side] - fs.bn[1]) / (fs.kn[1] - Jane.bn[side]), 3)
+            x = round((Jane.bn[side] - fs.bn[1]) / (fs.kn[1] - Jane.kn[side]), 3)
             J.append((x, fs))
         else:
             J.append((Jane.bounds[0], fs))
