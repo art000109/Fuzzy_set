@@ -28,7 +28,7 @@ def chang(*fuzzy_sets) -> tuple:
 def kaufmanGupt(*fuzzy_sets) -> tuple:
     if not all(tuple(1 if isinstance(i, Fuzzy_set) else None for i in fuzzy_sets)):
             raise TypeError('Only Fuzzy sets allowed')
-    KG = [((fs.bounds[0] + fs.bounds[1] + 2 * (fs.m + fs.M))/6,
+    KG = [(fs.mean(),
         (fs.M + fs.bounds[1])/2,
         fs.bounds[1] - fs.bounds[0]) for fs in fuzzy_sets]
     fuzzy_sets = list(fuzzy_sets)

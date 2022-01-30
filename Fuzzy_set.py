@@ -99,11 +99,15 @@ class Fuzzy_set:
             else:
                 Y = np.amax(np.array([fs.probability(X) for fs in other]), axis=0)
         elif type == 'substract':
-            Y = tuple(max(self.probability(i) - sum(tuple(fs.probability(i) for fs in other)), 0) for i in X)
+            min_array = self.probability(X) - np.sum(np.array([fs.probability(X) for fs in other]), axis=0)
+            Y = np.amax(np.stack([min_array, np.zeros_like(min_array, dtype=float)]), axis=0)
         elif type == 'trunc':
-            Y = np.amin(np.stack([self.probability(X), np.full_like(self.probability(X), other, dtype=float)]))
+            Y = np.amin(np.stack([self.probability(X), np.full_like(self.probability(X), other, dtype=float)]), axis=0)
         elif type == 'extension':
-            Y = np.amax(np.stack([self.probability(X), np.full_like(self.probability(X), other, dtype=float)]))
+            Y = np.amax(np.stack([self.probability(X), np.full_like(self.probability(X), other, dtype=float)]), axis=0)
+        elif type == 'inclusion':
+            min_array = 1 - self.probability(X) + other.probability(X)
+            Y = np.amin(np.stack([min_array, np.ones_like(min_array)]), axis=0)
                 
         _, ax = plt.subplots()
         ax.set_xlim(bounds[0]-1, bounds[1]+1)
@@ -256,20 +260,32 @@ class Fuzzy_set:
 
     def mean(self) -> float:
         ''' Mean of A '''
-        return (self.bounds[0] + 
-                2 * (self.m + self.M) + self.bounds[1])/6
+        return (self.bounds[0] + 2 * self.m +
+                2 * self.M + self.bounds[1])/6
 
     def var(self) -> float:
         ''' Variance of A '''
         return ((self.bounds[1] - self.bounds[0])**2
-            + 2 * (self.bounds[1] - self.bounds[0]) *
-                (self.M - self.m) + 3*(self.M - self.m)**2)/24
+            + 2 * (self.bounds[1] - self.bounds[0]) * (self.M - self.m) +
+            3*(self.M - self.m)**2)/24
+    
+    def trunc(self, k: float, accuracy: float = 2) -> None:
+        ''' Truncation of fuzzy set '''
+        if not (isinstance(k, float) and 0 < k < 1):
+            raise ValueError('k must be between (0, 1)')
+        self._plot(k, type='trunc', accuracy=accuracy)
+    
+    def extension(self, k: float, accuracy: float = 2) -> None:
+        ''' Extension of fuzzy set '''
+        if not (isinstance(k, float) and 0 < k < 1):
+            raise ValueError('k must be between (0, 1)')
+        self._plot(k, type='extension', accuracy=accuracy)
 
     def con(self, k: float = 1.5, accuracy: float = 2) -> None:
         ''' Algebraic concentration of fuzzy set '''
         if not (isinstance(k, float) or isinstance(k, int)):
             raise TypeError('k - float or int number')
-        if k < 1:
+        if k <= 1:
             raise ValueError('k must be grater then 1')
         self._plot(k, type='con', accuracy=accuracy)
     
@@ -315,6 +331,8 @@ class Fuzzy_set:
         if not(isinstance(*other, float) or isinstance(*other, int) or tuple(i for i in other if isinstance(i, Fuzzy_set))):
             raise TypeError('Only Fuzzy sets or numbers allowed')
         if isinstance(*other, float) or isinstance(*other, int):
+            if other[0] <= 0:
+                raise ValueError('k must be grater then 0')
             self._plot(*other, type='matmul_number', accuracy=accuracy)
         else:
             self._plot(other, type='matmul_set', accuracy=accuracy)
@@ -324,18 +342,12 @@ class Fuzzy_set:
         if not (len(tuple(i for i in other if isinstance(i, Fuzzy_set))) == len(other)):
             raise TypeError('Division is performed only with fuzzy sets')
         self._plot(other, type='division', accuracy=accuracy)
-        
-    def trunc(self, k: float, accuracy: float = 2) -> None:
-        ''' Truncation of fuzzy set '''
-        if not (isinstance(k, float) and 0 < k < 1):
-            raise ValueError('k must be between (0, 1)')
-        self._plot(k, type='trunc', accuracy=accuracy)
-    
-    def extension(self, k: float, accuracy: float = 2) -> None:
-        ''' Extension of fuzzy set '''
-        if not (isinstance(k, float) and 0 < k < 1):
-            raise ValueError('k must be between (0, 1)')
-        self._plot(k, type='extension', accuracy=accuracy)
+
+    def inclusion(self, other, accuracy: float = 2) -> None:
+        ''' Inclusion of fuzzy set '''
+        if not isinstance(other, Fuzzy_set):
+            raise TypeError('Addition is performed only with fuzzy set')
+        self._plot(other, type='inclusion', accuracy=accuracy)
 
     def probability(self, x: float, accuracy: int = 4) -> float:
         if not(isinstance(x, int) or isinstance(x, float) or isinstance(x, np.ndarray)):
@@ -555,3 +567,7 @@ class Fuzzy_field:
                 title=title)
         ax.grid()
         plt.show()
+A = Fuzzy_set(3, 5, 2, 2)
+B = Fuzzy_set(7, 9, 2, 2)
+C = Fuzzy_set(6, 6, 2, 2)
+A.inclusion(B)
