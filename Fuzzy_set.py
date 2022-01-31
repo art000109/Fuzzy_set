@@ -567,7 +567,3 @@ class Fuzzy_field:
                 title=title)
         ax.grid()
         plt.show()
-A = Fuzzy_set(3, 5, 2, 2)
-B = Fuzzy_set(7, 9, 2, 2)
-C = Fuzzy_set(6, 6, 2, 2)
-A.inclusion(B)
