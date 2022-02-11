@@ -241,7 +241,7 @@ class Fuzzy_set:
     def __ne__(self, other) -> None:
         self._plot(other, type='ne')
 
-    def __contains__(self, other):
+    def __contains__(self, other) -> bool:
         return self.bounds[0] < other < self.bounds[1]
 
     def __hash__(self) -> int:
