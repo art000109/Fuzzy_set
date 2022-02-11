@@ -3,7 +3,7 @@ from Fuzzy_set import Fuzzy_set
 def сhewPark(*fuzzy_sets, w: float = 1) -> tuple:
     if not all(tuple(1 if isinstance(i, Fuzzy_set) else None for i in fuzzy_sets)):
             raise TypeError('Only Fuzzy sets allowed')
-    CP = []
+    CP = list()
     for fuzzy_set in fuzzy_sets:
         t1 = (fuzzy_set.bounds[0] + fuzzy_set.m +
             fuzzy_set.M + fuzzy_set.bounds[1]) / 4
@@ -14,7 +14,7 @@ def сhewPark(*fuzzy_sets, w: float = 1) -> tuple:
 def chang(*fuzzy_sets) -> tuple:
     if not all(tuple(1 if isinstance(i, Fuzzy_set) else None for i in fuzzy_sets)):
             raise TypeError('Only Fuzzy sets allowed')
-    CH = []
+    CH = list()
     for fs in fuzzy_sets:
         t = (fs.M**2 +
              fs.M * fs.bounds[1] +
@@ -53,7 +53,7 @@ def jane(m: float, M: float, a: float, b: float, *fuzzy_sets) -> tuple:
         M, b = 0, 0
     side = 1 if m == 0 else 0
     Jane = Fuzzy_set(m, M, a, b, fuzzy_sets[0].inverted)
-    J = []
+    J = list()
     for fs in fuzzy_sets:
         if fs.m >= Jane.m:
             J.append((fs.M, fs))
@@ -74,9 +74,9 @@ def duboisPrades(*fuzzy_sets) -> tuple:
     if not(all(tuple(1 if fs.inverted else None for fs in fuzzy_sets)) or
             all(tuple(1 if not fs.inverted else None for fs in fuzzy_sets))):
         raise TypeError('All sets must be equally inverted')
-    DP, DP_temp = [], set()
+    DP, DP_temp = list(), set()
     for fs in fuzzy_sets:
-        temp = []
+        temp = list()
         for other_fs in fuzzy_sets:
             points = []
             if fs.params() == other_fs.params():
@@ -94,6 +94,7 @@ def duboisPrades(*fuzzy_sets) -> tuple:
             DP.append((1, fs))
             DP_temp.add(fs)
 
+    DP_temp = frozenset(DP_temp)
     for fs in fuzzy_sets:
         temp, points = [], []
         if fs in DP_temp:
