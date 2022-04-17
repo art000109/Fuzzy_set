@@ -46,7 +46,7 @@ class Fuzzy_set:
     def _linearProbability(self, x: float, n: int) -> float:
         return self.kn[n] * x + self.bn[n]
     
-    def _boundsIntersection(self, other):
+    def _boundsIntersection(self, other) -> tuple:
         X = []
         for i in range(2):
             for j in range(2):
