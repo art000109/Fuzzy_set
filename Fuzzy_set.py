@@ -523,7 +523,7 @@ class Fuzzy_field:
         self.field = []
 
     def add(self, *fuzzy_sets) -> None:
-        ''' Add other fuzzy sets'''
+        ''' Add other fuzzy sets '''
         if not all(tuple(1 if isinstance(i, Fuzzy_set) else 0 for i in fuzzy_sets)):
             raise TypeError('Only Fuzzy sets allowed')
         for fuzzy_set in fuzzy_sets:
@@ -531,7 +531,7 @@ class Fuzzy_field:
         self.field = list(set(tuple(self.field)))
 
     def field_info(self) -> None:
-        ''' Print information about fuzzy sets'''
+        ''' Print information about fuzzy sets '''
         if not len(self.field):
             print('Field is empty')
         else:
