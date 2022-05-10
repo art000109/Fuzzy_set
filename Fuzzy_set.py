@@ -3,7 +3,7 @@ import numpy as np
     
 class Fuzzy_set:  
     def __init__(self, m: float, M: float, a: float, b: float, inverted: bool = False):
-        if not(all([1 if isinstance(n, float) or isinstance(n, int) else 0 for n in (m, M, a, b)])):
+        if not(all([1 if isinstance(n, (float, int)) else 0 for n in (m, M, a, b)])):
             raise ValueError('(m, M, a, b) - float or int numbers')
         if m > m:
             raise ValueError('The condition m > M - Invalid')
@@ -58,7 +58,7 @@ class Fuzzy_set:
         if isinstance(other, Fuzzy_set):
             bounds = (min(self.bounds[0], other.bounds[0]),
                     max(self.bounds[1], other.bounds[1]))
-        elif isinstance(other, int) or isinstance(other, float):
+        elif isinstance(other, (int, float)):
             bounds = self.bounds
         elif isinstance(other, tuple):
             bounds = (min(fs.bounds[0] for fs in list(other)+[self]),
@@ -286,7 +286,7 @@ class Fuzzy_set:
 
     def con(self, k: float = 1.5, accuracy: float = 2) -> None:
         ''' Algebraic concentration of fuzzy set '''
-        if not (isinstance(k, float) or isinstance(k, int)):
+        if not isinstance(k, (float, int)):
             raise TypeError('k - float or int number')
         if k <= 1:
             raise ValueError('k must be grater then 1')
@@ -294,7 +294,7 @@ class Fuzzy_set:
     
     def dil(self, k: float = 0.5, accuracy: float = 2) -> None:
         ''' Algebraic dilatation of fuzzy set '''
-        if not (isinstance(k, float) or isinstance(k, int)):
+        if not isinstance(k, (float, int)):
             raise TypeError('k - float or int number')
         if k <= 0 or k >= 1:
             raise ValueError('k must be between (0, 1)')
@@ -331,9 +331,9 @@ class Fuzzy_set:
     
     def mul(self, *other, accuracy: float = 2) -> None:
         ''' Algebraic multiplication of fuzzy sets '''
-        if not(isinstance(*other, float) or isinstance(*other, int) or tuple(i for i in other if isinstance(i, Fuzzy_set))):
+        if not ( isinstance(*other, (float, int)) or tuple(i for i in other if isinstance(i, Fuzzy_set))):
             raise TypeError('Only Fuzzy sets or numbers allowed')
-        if isinstance(*other, float) or isinstance(*other, int):
+        if isinstance(*other, (float, int)):
             if other[0] <= 0:
                 raise ValueError('k must be grater then 0')
             self._plot(*other, type='matmul_number', accuracy=accuracy)
@@ -342,7 +342,7 @@ class Fuzzy_set:
     
     def division(self, *other, accuracy: float = 2) -> None:
         ''' Algebraic division of fuzzy sets '''
-        if not (len(tuple(i for i in other if isinstance(i, Fuzzy_set))) == len(other)):
+        if not ( len( tuple(i for i in other if isinstance(i, Fuzzy_set)) ) == len(other)):
             raise TypeError('Division is performed only with fuzzy sets')
         self._plot(other, type='division', accuracy=accuracy)
 
@@ -353,7 +353,7 @@ class Fuzzy_set:
         self._plot(other, type='inclusion', accuracy=accuracy)
 
     def probability(self, x: float, accuracy: int = 4) -> float:
-        if not(isinstance(x, int) or isinstance(x, float) or isinstance(x, np.ndarray)):
+        if not isinstance(x, (int, float, np.ndarray)):
             raise TypeError('x must be integer or float number')
         if not isinstance(accuracy, int):
             raise TypeError('Accuracy must be integer number')
